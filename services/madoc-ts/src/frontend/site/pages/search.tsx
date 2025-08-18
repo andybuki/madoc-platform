@@ -27,7 +27,7 @@ import { useSearchQuery } from '../hooks/use-search-query';
 import { ButtonRow, TinyButton } from '../../shared/navigation/Button';
 
 export const Search: React.FC = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [{ resolvedData: searchResponse, latestData }, displayFacets, isLoading] = useSearch();
   const { rawQuery, page, fulltext, appliedFacets } = useSearchQuery();
   const {
@@ -44,6 +44,26 @@ export const Search: React.FC = () => {
     clearAllFacets,
     setFullTextQuery,
   } = useSearchFacets();
+
+  // Helper function to get label in current language only
+  const getLocalizedLabel = (label: any) => {
+    if (!label || typeof label === 'string') {
+      return label;
+    }
+    
+    // If label has the current language, use it
+    if (label[i18n.language]) {
+      return { [i18n.language]: label[i18n.language] };
+    }
+    
+    // Fallback to first available language
+    const firstLang = Object.keys(label)[0];
+    if (firstLang && label[firstLang]) {
+      return { [firstLang]: label[firstLang] };
+    }
+    
+    return label;
+  };
 
   return (
     <>
@@ -67,7 +87,7 @@ export const Search: React.FC = () => {
             return (
               <SearchFilterSection key={facet.id}>
                 <SearchFilterSectionTitle>
-                  <LocaleString>{facet.label}</LocaleString>
+                  <LocaleString>{getLocalizedLabel(facet.label)}</LocaleString>
                 </SearchFilterSectionTitle>
                 <SearchFilterItemList>
                   {facet.items.map(item => {
@@ -88,7 +108,7 @@ export const Search: React.FC = () => {
                           />
                         </SearchFilterCheckbox>
                         <SearchFilterLabel htmlFor={itemHash}>
-                          <LocaleString>{item.label}</LocaleString>
+                          <LocaleString>{getLocalizedLabel(item.label)}</LocaleString>
                         </SearchFilterLabel>
                         {showSearchFacetCount ? (
                           <SearchFilterItemCount>
