@@ -1,5 +1,6 @@
 import { InternationalString } from '@iiif/presentation-3';
 import { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { FacetConfig } from '../../shared/features/MetadataFacetEditor';
 import { apiHooks, paginatedApiHooks } from '../../shared/hooks/use-api-query';
 import { useSiteConfiguration } from '../features/SiteConfigurationContext';
@@ -13,6 +14,7 @@ function normalizeDotKey(key: string) {
 export function useSearch() {
   const { projectId, collectionId, manifestId } = useRouteContext();
   const { fulltext, appliedFacets, page } = useSearchQuery();
+  const { i18n } = useTranslation();
   const {
     project: { searchStrategy, claimGranularity, searchOptions },
   } = useSiteConfiguration();
@@ -49,6 +51,7 @@ export function useSearch() {
         manifestId,
         fulltext: fulltext,
         facet_fields: facetsToRequest.length ? facetsToRequest : undefined,
+        facet_languages: [i18n.language],
         //  @todo stringify facets.
         facets: appliedFacets.map(facet => ({
           type: 'metadata',
@@ -178,7 +181,7 @@ export function useSearch() {
           if (searchResultFacetValues) {
             displayItem.items.push(
               ...searchResultFacetValues.map(fieldValue => ({
-                label: { none: [fieldValue.value] },
+                label: { [i18n.language]: [fieldValue.value] },
                 key: fieldValue.key,
                 values: [fieldValue.value],
                 count: fieldValue.count,
@@ -192,7 +195,7 @@ export function useSearch() {
     }
 
     return displayList;
-  }, [facetDisplayOrder, facetIdMap, searchResponse.resolvedData]);
+  }, [facetDisplayOrder, facetIdMap, searchResponse.resolvedData, i18n.language]);
 
   return [searchResponse, displayFacets, searchFacetConfig.isLoading || searchResponse.isLoading] as const;
 }
