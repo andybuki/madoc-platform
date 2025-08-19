@@ -94,7 +94,9 @@ export const Search: React.FC = () => {
         const noneValues = label['none'];
         console.log('None values:', noneValues);
         
-        // If there's only one value or if we can't split meaningfully, return as-is
+        // Extract the actual text content
+        let textToShow = '';
+        
         if (noneValues.length === 1) {
           const value = noneValues[0];
           
@@ -103,23 +105,46 @@ export const Search: React.FC = () => {
             const parts = value.split(' and ').map(part => part.trim());
             console.log('Split parts:', parts);
             
-            // For now, just return the first part to show only one language
-            // You could implement more sophisticated language detection here
-            return { [i18n.language]: [parts[0]] };
+            // Return only the first part to show only one language
+            textToShow = parts[0];
+          } else {
+            textToShow = value;
           }
-          
-          // Return the single value
-          return { [i18n.language]: [value] };
+        } else {
+          // Multiple values in 'none' - use the first one
+          textToShow = noneValues[0];
         }
         
-        // Multiple values in 'none' - return the first one
-        return { [i18n.language]: [noneValues[0]] };
+        // IMPORTANT: Return with the current language code instead of 'none'
+        // This prevents LocaleString from falling back to lang="none"
+        return { [i18n.language]: [textToShow] };
       }
       
-      // Priority 5: Fallback to first available language
+      // Priority 5: If we only have 'none', convert it to current language
+      if (availableLanguages.length === 1 && availableLanguages[0] === 'none') {
+        const noneValue = label['none'];
+        if (Array.isArray(noneValue) && noneValue.length > 0) {
+          let textToShow = noneValue[0];
+          
+          // Handle combined language strings
+          if (typeof textToShow === 'string' && textToShow.includes(' and ')) {
+            const parts = textToShow.split(' and ').map(part => part.trim());
+            textToShow = parts[0]; // Show only first language
+          }
+          
+          // Return with current language instead of 'none'
+          return { [i18n.language]: [textToShow] };
+        }
+      }
+      
+      // Priority 6: Fallback to first available language (but convert to current language)
       if (availableLanguages.length > 0) {
         const firstLang = availableLanguages[0];
         if (label[firstLang] && Array.isArray(label[firstLang])) {
+          // If it's 'none', convert to current language
+          if (firstLang === 'none' || firstLang === '@none') {
+            return { [i18n.language]: label[firstLang] };
+          }
           return { [firstLang]: label[firstLang] };
         }
       }
